@@ -77,3 +77,4 @@ class FootballAPI:
 
         except Exception:
             return "Horário indefinido"
+        
