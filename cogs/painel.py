@@ -8,6 +8,7 @@ from datetime import datetime
 
 
 CANAL_COPA_ID = int(os.getenv("CANAL_COPA_ID", 0))
+CANAL_PALPITES_ID = int(os.getenv("CANAL_PALPITES_ID", 0))
 MENSAGEM_COPA_ID = int(os.getenv("MENSAGEM_COPA_ID", 0))
 FOOTBALL_API_KEY = os.getenv("FOOTBALL_API_KEY")
 
@@ -24,17 +25,33 @@ class PainelCopaView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
+        if CANAL_PALPITES_ID:
+            self.add_item(
+                discord.ui.Button(
+                    label="Ir para Palpites",
+                    emoji="🎯",
+                    style=discord.ButtonStyle.link,
+                    url=f"https://discord.com/channels/@me/{CANAL_PALPITES_ID}"
+                )
+            )
+
     @discord.ui.button(
-        label="Palpites",
-        emoji="🎯",
+        label="Regras dos Palpites",
+        emoji="📜",
         style=discord.ButtonStyle.green,
-        custom_id="sants_copa_palpites"
+        custom_id="sants_copa_regras"
     )
-    async def palpites(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def regras(self, interaction: discord.Interaction, button: discord.ui.Button):
+        canal = f"<#{CANAL_PALPITES_ID}>" if CANAL_PALPITES_ID else "canal de palpites"
+
         await interaction.response.send_message(
-            "🎯 **Sistema de Palpites**\n\n"
-            "Faça seus palpites antes dos jogos começarem e dispute o topo do ranking da Família Sant's.\n\n"
-            "Em breve: `/palpite`",
+            "📜 **Regras dos Palpites**\n\n"
+            f"🎯 Os palpites devem ser enviados em {canal}.\n"
+            "⏰ Palpites só valem antes do início da partida.\n"
+            "✅ Acertou o vencedor: **+1 ponto**\n"
+            "🎯 Acertou o placar exato: **+3 pontos**\n"
+            "🔥 Acertou uma zebra: **bônus especial**\n\n"
+            "🏆 Os melhores colocados entram no ranking oficial da Sants Copa.",
             ephemeral=True
         )
 
@@ -46,26 +63,9 @@ class PainelCopaView(discord.ui.View):
     )
     async def ranking(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(
-            "🏆 **Ranking Sants Copa**\n\n"
-            "Os melhores palpiteiros aparecerão aqui com pontuação, acertos e medalhas especiais.\n\n"
-            "Em breve: `/ranking_copa`",
-            ephemeral=True
-        )
-
-    @discord.ui.button(
-        label="Regras",
-        emoji="📜",
-        style=discord.ButtonStyle.gray,
-        custom_id="sants_copa_regras"
-    )
-    async def regras(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(
-            "📜 **Regras da Sants Copa**\n\n"
-            "✅ Acertou vencedor: **+1 ponto**\n"
-            "✅ Acertou placar exato: **+3 pontos**\n"
-            "🔥 Acertou zebra: **pontos extras**\n"
-            "⏰ Palpites encerram quando o jogo começa.\n\n"
-            "☠️ No fim da Copa, os melhores recebem cargos e premiações.",
+            "🏆 **Ranking da Sants Copa**\n\n"
+            "O ranking automático será liberado na próxima etapa do bot.\n"
+            "Por enquanto, o painel ficará responsável pelos jogos, resultados e classificação.",
             ephemeral=True
         )
 
@@ -82,17 +82,11 @@ class PainelCopa(commands.Cog):
         if not FOOTBALL_API_KEY:
             return None
 
-        headers = {
-            "X-Auth-Token": FOOTBALL_API_KEY
-        }
+        headers = {"X-Auth-Token": FOOTBALL_API_KEY}
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{BASE_URL}{endpoint}",
-                    headers=headers
-                ) as response:
-
+                async with session.get(f"{BASE_URL}{endpoint}", headers=headers) as response:
                     if response.status != 200:
                         print(f"❌ Erro API {response.status}: {await response.text()}")
                         return None
@@ -119,21 +113,33 @@ class PainelCopa(commands.Cog):
         except Exception:
             return "Horário indefinido"
 
+    def status_jogo(self, status: str):
+        status_map = {
+            "SCHEDULED": "Agendado",
+            "TIMED": "Agendado",
+            "IN_PLAY": "Ao vivo",
+            "PAUSED": "Intervalo",
+            "FINISHED": "Finalizado",
+            "POSTPONED": "Adiado",
+            "CANCELLED": "Cancelado"
+        }
+
+        return status_map.get(status, status)
+
     def formatar_jogos(self, data):
         if not data or "matches" not in data:
             return (
                 "⚠️ Não consegui carregar os jogos agora.\n"
-                "O painel tentará atualizar novamente automaticamente."
+                "O painel tentará atualizar novamente em alguns minutos."
             )
 
-        jogos = data["matches"][:6]
-
+        jogos = data["matches"][:8]
         linhas = []
 
         for jogo in jogos:
             casa = jogo["homeTeam"].get("shortName") or jogo["homeTeam"].get("name")
             fora = jogo["awayTeam"].get("shortName") or jogo["awayTeam"].get("name")
-            status = jogo.get("status", "SCHEDULED")
+            status = self.status_jogo(jogo.get("status", "SCHEDULED"))
             horario = self.formatar_data(jogo.get("utcDate"))
 
             placar_casa = jogo["score"]["fullTime"]["home"]
@@ -190,35 +196,23 @@ class PainelCopa(commands.Cog):
 
         return "🇧🇷 Grupo do Brasil ainda não localizado pela API."
 
-    def mensagem_status(self):
-        return (
-            "💚💛 **Rumo ao Hexa!**\n"
-            "Acompanhe jogos, resultados, palpites e ranking da Copa diretamente pela Família Sant's."
-        )
-
     async def criar_embed(self):
         jogos = await self.buscar_jogos()
         classificacao = await self.buscar_classificacao()
 
         agora = datetime.now().strftime("%d/%m/%Y às %H:%M")
+        canal_palpites = f"<#{CANAL_PALPITES_ID}>" if CANAL_PALPITES_ID else "canal de palpites"
 
         embed = discord.Embed(
             title="🏆 SANTS COPA 2026",
             description=(
-                "☠️ **Central oficial da Copa do Mundo na Família Sant's**\n\n"
-                "Um painel automático para acompanhar a Copa, fazer palpites, "
-                "ver resultados e disputar o título de melhor palpiteiro do servidor."
+                "Central oficial da Copa do Mundo no servidor.\n\n"
+                "Acompanhe jogos, resultados, classificação e participe dos palpites."
             ),
-            color=discord.Color.gold()
+            color=discord.Color.green()
         )
 
         embed.set_image(url=BANNER_COPA_URL)
-
-        embed.add_field(
-            name="🌎 Status da Copa",
-            value=self.mensagem_status(),
-            inline=False
-        )
 
         embed.add_field(
             name="⚽ Jogos e Resultados",
@@ -233,38 +227,27 @@ class PainelCopa(commands.Cog):
         )
 
         embed.add_field(
-            name="🎯 Pontuação dos Palpites",
+            name="🎯 Palpites",
             value=(
+                f"Envie seus palpites em {canal_palpites} antes dos jogos começarem.\n\n"
                 "✅ Vencedor correto: **+1 ponto**\n"
                 "🎯 Placar exato: **+3 pontos**\n"
-                "🔥 Zebra correta: **bônus especial**\n"
-                "🏆 Ranking atualizado automaticamente"
+                "🔥 Zebra correta: **bônus especial**"
             ),
-            inline=True
+            inline=False
         )
 
         embed.add_field(
-            name="☠️ Jornada One Piece",
+            name="📌 Atualização automática",
             value=(
-                "🌊 East Blue — Fase de grupos\n"
-                "🧭 Grand Line — Mata-mata\n"
-                "🔥 Wano — Semifinal\n"
-                "🏴‍☠️ Laugh Tale — Final"
-            ),
-            inline=True
-        )
-
-        embed.add_field(
-            name="📌 Como participar",
-            value=(
-                "Use os botões abaixo para ver regras, palpites e ranking.\n"
-                "Os comandos oficiais serão liberados conforme o sistema evoluir."
+                "Este painel atualiza sozinho com os dados mais recentes da Copa.\n"
+                "Resultados e classificações podem depender da disponibilidade da API."
             ),
             inline=False
         )
 
         embed.set_footer(
-            text=f"Atualizado automaticamente • {agora} • Sants Copa"
+            text=f"Última atualização • {agora} • Sants Copa"
         )
 
         return embed
@@ -285,7 +268,7 @@ class PainelCopa(commands.Cog):
             f"✅ **Painel criado com sucesso!**\n\n"
             f"📌 Canal: {canal.mention}\n"
             f"🆔 ID da mensagem: `{msg.id}`\n\n"
-            f"Agora vá no Railway e coloque:\n"
+            f"No Railway, coloque:\n"
             f"`MENSAGEM_COPA_ID={msg.id}`\n\n"
             f"Depois clique em **Redeploy**.",
             ephemeral=True
