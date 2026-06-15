@@ -1,26 +1,67 @@
 {
-  "ultima_atualizacao": "",
+  "ultima_atualizacao": "15/06/2026",
 
-  "destaque": "",
+  "destaque": "🇧🇷 Acompanhe a Sants Copa 2026 e participe dos palpites no servidor.",
 
-  "grupos": {
-    "A": [],
-    "B": [],
-    "C": [],
-    "D": [],
-    "E": [],
-    "F": [],
-    "G": [],
-    "H": [],
-    "I": [],
-    "J": [],
-    "K": [],
-    "L": []
-  },
+"grupos": {
 
-  "jogos_hoje": [],
+  "A": [
+    "1º México",
+    "2º Coreia do Sul",
+    "3º Tchéquia",
+    "4º África do Sul"
+  ],
 
-  "proximos_jogos": [],
+  "B": [
+    "1º Canadá",
+    "2º Bósnia",
+    "3º Qatar",
+    "4º Suíça"
+  ],
 
-  "ranking": []
+  "C": [
+    "1º Brasil",
+    "2º Escócia",
+    "3º Marrocos",
+    "4º Haiti"
+  ],
+
+  "D": [
+    "1º Estados Unidos",
+    "2º Austrália",
+    "3º Turquia",
+    "4º Paraguai"
+  ],
+
+  "E": [],
+
+  "F": [],
+
+  "G": [],
+
+  "H": [],
+
+  "I": [],
+
+  "J": [],
+
+  "K": [],
+
+  "L": []
+},
+
+  "jogos_hoje": [
+    "📌 Nenhum jogo cadastrado para hoje."
+  ],
+
+  "proximos_jogos": [
+    "🇧🇷 Brasil x Haiti — Grupo C",
+    "🏴 Escócia x Marrocos — Grupo C"
+  ],
+
+  "ranking": [
+    "🥇 Aguardando participantes",
+    "🥈 Aguardando participantes",
+    "🥉 Aguardando participantes"
+  ]
 }

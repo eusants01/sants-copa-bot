@@ -77,6 +77,24 @@ async def load_extensions():
                 f"❌ Erro em {extensao}: {erro}"
             )
 
+    for extensao in extensoes:
+
+        try:
+
+            await bot.load_extension(
+                extensao
+            )
+
+            print(
+                f"✅ {extensao} carregado."
+            )
+
+        except Exception as erro:
+
+            print(
+                f"❌ Erro em {extensao}: {erro}"
+            )
+
 
 async def main():
     async with bot:
