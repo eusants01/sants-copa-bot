@@ -34,9 +34,7 @@ async def load_extensions():
     extensoes = [
 
         "cogs.painel",
-        "cogs.palpites",
         "cogs.jogos",
-        "cogs.ranking"
 
     ]
 
