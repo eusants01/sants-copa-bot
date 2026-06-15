@@ -1,57 +1,62 @@
 {
   "ultima_atualizacao": "15/06/2026",
 
-  "destaque": "🇧🇷 Acompanhe a Sants Copa 2026 e participe dos palpites no servidor.",
-
-"grupos": {
-
-  "A": [
-    "1º México",
-    "2º Coreia do Sul",
-    "3º Tchéquia",
-    "4º África do Sul"
+  "destaque": [
+    "🔥 Começou a Sants Copa 2026.",
+    "🎯 Faça seus palpites.",
+    "🏆 Dispute o ranking.",
+    "🇧🇷 Acompanhe o Brasil rumo ao Hexa."
   ],
 
-  "B": [
-    "1º Canadá",
-    "2º Bósnia",
-    "3º Qatar",
-    "4º Suíça"
-  ],
+  "selecao_brasil": {
+    "grupo": "C",
+    "posicao": "1º",
+    "pontos": 3,
+    "proximo_jogo": "Brasil x Haiti",
+    "data": "19/06/2026"
+  },
 
-  "C": [
-    "1º Brasil",
-    "2º Escócia",
-    "3º Marrocos",
-    "4º Haiti"
-  ],
+  "grupos": {
+    "A": [
+      "1º México",
+      "2º Coreia do Sul",
+      "3º Tchéquia",
+      "4º África do Sul"
+    ],
 
-  "D": [
-    "1º Estados Unidos",
-    "2º Austrália",
-    "3º Turquia",
-    "4º Paraguai"
-  ],
+    "B": [
+      "1º Canadá",
+      "2º Bósnia",
+      "3º Qatar",
+      "4º Suíça"
+    ],
 
-  "E": [],
+    "C": [
+      "1º Brasil",
+      "2º Escócia",
+      "3º Marrocos",
+      "4º Haiti"
+    ],
 
-  "F": [],
+    "D": [
+      "1º Estados Unidos",
+      "2º Austrália",
+      "3º Turquia",
+      "4º Paraguai"
+    ],
 
-  "G": [],
-
-  "H": [],
-
-  "I": [],
-
-  "J": [],
-
-  "K": [],
-
-  "L": []
-},
+    "E": [],
+    "F": [],
+    "G": [],
+    "H": [],
+    "I": [],
+    "J": [],
+    "K": [],
+    "L": []
+  },
 
   "jogos_hoje": [
-    "📌 Nenhum jogo cadastrado para hoje."
+    "📌 Nenhuma partida cadastrada."
   ],
 
   "proximos_jogos": [
@@ -60,8 +65,9 @@
   ],
 
   "ranking": [
-    "🥇 Aguardando participantes",
-    "🥈 Aguardando participantes",
-    "🥉 Aguardando participantes"
+    "🥇 Em breve",
+    "🥈 Em breve",
+    "🥉 Em breve"
   ]
 }
+
