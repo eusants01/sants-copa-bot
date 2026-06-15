@@ -179,16 +179,23 @@ class PainelCopa(commands.Cog):
         )
 
         embed.add_field(
-            name="🇧🇷 Seleção Brasileira",
-            value=(
-                f"🏆 Grupo: **{brasil.get('grupo', '-')}**\n"
-                f"🏅 Posição: **{brasil.get('posicao', '-')}**\n"
-                f"⭐ Pontos: **{brasil.get('pontos', 0)}**\n"
-                f"⚽ Próximo jogo: **{brasil.get('proximo_jogo', 'A definir')}**\n"
-                f"📅 Data: **{brasil.get('data', 'A definir')}**"
-            ),
-            inline=False
-        )
+    name="🇧🇷 Seleção Brasileira",
+    value=(
+        f"🏆 Grupo: **{brasil.get('grupo', '-')}**\n"
+        f"🏅 Posição: **{brasil.get('posicao', '-')}**\n"
+        f"⭐ Pontos: **{brasil.get('pontos', 0)}**\n"
+        f"⚽ Jogos: **{brasil.get('jogos', 0)}**\n"
+        f"✅ Vitórias: **{brasil.get('vitorias', 0)}**\n"
+        f"🤝 Empates: **{brasil.get('empates', 0)}**\n"
+        f"❌ Derrotas: **{brasil.get('derrotas', 0)}**\n"
+        f"🥅 Saldo de gols: **{brasil.get('saldo_gols', 0)}**\n\n"
+        f"⏳ Próximo jogo: **{brasil.get('proximo_jogo', 'A definir')}**\n"
+        f"📅 Data: **{brasil.get('data', 'A definir')}**\n"
+        f"🕒 Horário: **{brasil.get('horario', 'A definir')}**\n"
+        f"🟡 Status: **{brasil.get('status', 'A definir')}**"
+    ),
+    inline=False
+)
 
         embed.add_field(
             name="⚽ Jogos de Hoje",

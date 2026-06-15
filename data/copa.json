@@ -8,13 +8,22 @@
     "🇧🇷 Acompanhe o Brasil rumo ao Hexa."
   ],
 
-  "selecao_brasil": {
-    "grupo": "C",
-    "posicao": "1º",
-    "pontos": 3,
-    "proximo_jogo": "Brasil x Haiti",
-    "data": "19/06/2026"
-  },
+ "selecao_brasil": {
+  "grupo": "C",
+  "posicao": "1º",
+  "pontos": 3,
+  "jogos": 1,
+  "vitorias": 1,
+  "empates": 0,
+  "derrotas": 0,
+  "gols_pro": 2,
+  "gols_contra": 0,
+  "saldo_gols": 2,
+  "proximo_jogo": "Brasil x Haiti",
+  "data": "19/06/2026",
+  "horario": "17:00",
+  "status": "Em breve"
+},
 
   "grupos": {
     "A": [
