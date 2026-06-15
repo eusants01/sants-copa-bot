@@ -25,73 +25,40 @@ bot = commands.Bot(
 
 @bot.event
 async def on_ready():
-
     print(f"✅ {bot.user} conectado com sucesso!")
 
     try:
-
         await CopaUpdater.atualizar()
-
-        print(
-            "✅ Dados da Copa sincronizados."
-        )
-
+        print("✅ Dados da Copa sincronizados.")
     except Exception as erro:
+        print(f"❌ Erro ao sincronizar Copa: {erro}")
 
-        print(
-            f"❌ Erro ao sincronizar Copa: {erro}"
-        )
+    await asyncio.sleep(3)
 
     try:
-
         await bot.tree.sync()
-
-        print(
-            "✅ Comandos slash sincronizados."
-        )
-
+        print("✅ Comandos slash sincronizados.")
     except Exception as erro:
-
-        print(
-            f"❌ Erro ao sincronizar comandos: {erro}"
-        )
+        print(f"❌ Erro ao sincronizar comandos: {erro}")
 
 
 async def load_extensions():
-
     extensoes = [
-
         "cogs.painel",
-
         "cogs.jogos"
-
     ]
 
     for extensao in extensoes:
-
         try:
-
-            await bot.load_extension(
-                extensao
-            )
-
-            print(
-                f"✅ {extensao} carregado."
-            )
-
+            await bot.load_extension(extensao)
+            print(f"✅ {extensao} carregado.")
         except Exception as erro:
-
-            print(
-                f"❌ Erro em {extensao}: {erro}"
-            )
+            print(f"❌ Erro em {extensao}: {erro}")
 
 
 async def main():
-
     async with bot:
-
         await load_extensions()
-
         await bot.start(TOKEN)
 
 

@@ -1,4 +1,5 @@
 import os
+import asyncio
 import discord
 
 from discord.ext import commands, tasks
@@ -190,11 +191,25 @@ class PainelView(discord.ui.View):
 
 
 class PainelCopa(commands.Cog):
+
     def __init__(self, bot):
+
         self.bot = bot
+
+        self.bot.loop.create_task(
+            self.iniciar_painel()
+        )
+
+    async def iniciar_painel(self):
+
+        await self.bot.wait_until_ready()
+
+        await asyncio.sleep(5)
+
         self.atualizar_painel.start()
 
     def cog_unload(self):
+
         self.atualizar_painel.cancel()
 
     def criar_embed(self):
