@@ -30,7 +30,52 @@ async def on_ready():
 
 
 async def load_extensions():
-    await bot.load_extension("cogs.painel")
+
+    extensoes = [
+
+        "cogs.painel",
+
+        "cogs.palpites",
+
+        "cogs.ranking"
+
+    ]
+
+    for extensao in extensoes:
+
+        try:
+
+            await bot.load_extension(
+                extensao
+            )
+
+            print(
+                f"✅ {extensao} carregado."
+            )
+
+        except Exception as erro:
+
+            print(
+                f"❌ Erro em {extensao}: {erro}"
+            )
+
+    for extensao in extensoes:
+
+        try:
+
+            await bot.load_extension(
+                extensao
+            )
+
+            print(
+                f"✅ {extensao} carregado."
+            )
+
+        except Exception as erro:
+
+            print(
+                f"❌ Erro em {extensao}: {erro}"
+            )
 
 
 async def main():
