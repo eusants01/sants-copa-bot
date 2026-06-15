@@ -47,7 +47,10 @@ class GrupoSelect(discord.ui.Select):
 
         embed = discord.Embed(
             title=f"🏆 Grupo {grupo}",
-            description=lista_texto(conteudo, "📌 Grupo ainda sem informações cadastradas."),
+            description=lista_texto(
+                conteudo,
+                "📌 Grupo ainda sem informações cadastradas."
+            ),
             color=discord.Color.green()
         )
 
@@ -65,6 +68,51 @@ class PainelView(discord.ui.View):
         self.add_item(GrupoSelect())
 
     @discord.ui.button(
+        label="Brasil",
+        emoji="🇧🇷",
+        style=discord.ButtonStyle.green,
+        custom_id="sants_copa_brasil"
+    )
+    async def brasil(self, interaction: discord.Interaction, button: discord.ui.Button):
+        dados = CopaService.carregar()
+        brasil = dados.get("selecao_brasil", {})
+
+        embed = discord.Embed(
+            title="🇧🇷 Seleção Brasileira",
+            color=discord.Color.green()
+        )
+
+        embed.add_field(
+            name="📊 Campanha",
+            value=(
+                f"🏆 Grupo: **{brasil.get('grupo', '-')}**\n"
+                f"🏅 Posição: **{brasil.get('posicao', '-')}**\n"
+                f"⭐ Pontos: **{brasil.get('pontos', 0)}**\n"
+                f"⚽ Jogos: **{brasil.get('jogos', 0)}**\n"
+                f"✅ Vitórias: **{brasil.get('vitorias', 0)}**\n"
+                f"🤝 Empates: **{brasil.get('empates', 0)}**\n"
+                f"❌ Derrotas: **{brasil.get('derrotas', 0)}**\n"
+                f"🥅 Saldo de gols: **{brasil.get('saldo_gols', 0)}**"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="⏳ Próximo jogo",
+            value=(
+                f"⚽ **{brasil.get('proximo_jogo', 'A definir')}**\n"
+                f"📅 {brasil.get('data', 'A definir')}\n"
+                f"🕒 {brasil.get('horario', 'A definir')}\n"
+                f"🟡 {brasil.get('status', 'A definir')}"
+            ),
+            inline=False
+        )
+
+        embed.set_footer(text=f"Sants Copa 2026 • {agora()}")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @discord.ui.button(
         label="Jogos",
         emoji="📅",
         style=discord.ButtonStyle.green,
@@ -80,13 +128,19 @@ class PainelView(discord.ui.View):
 
         embed.add_field(
             name="⚽ Jogos de Hoje",
-            value=lista_texto(dados.get("jogos_hoje", []), "📌 Nenhum jogo cadastrado para hoje."),
+            value=lista_texto(
+                dados.get("jogos_hoje", []),
+                "📌 Nenhum jogo cadastrado para hoje."
+            ),
             inline=False
         )
 
         embed.add_field(
             name="⏳ Próximos Jogos",
-            value=lista_texto(dados.get("proximos_jogos", []), "📌 Nenhum próximo jogo cadastrado."),
+            value=lista_texto(
+                dados.get("proximos_jogos", []),
+                "📌 Nenhum próximo jogo cadastrado."
+            ),
             inline=False
         )
 
@@ -113,24 +167,6 @@ class PainelView(discord.ui.View):
         )
 
     @discord.ui.button(
-        label="Regras",
-        emoji="📜",
-        style=discord.ButtonStyle.gray,
-        custom_id="sants_copa_regras"
-    )
-    async def regras(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(
-            "📜 **Regras Oficiais — Sants Copa 2026**\n\n"
-            "1. Os palpites devem ser enviados antes do início da partida.\n"
-            "2. Palpites editados após o início do jogo serão desconsiderados.\n"
-            "3. Acertar o vencedor concede **+1 ponto**.\n"
-            "4. Acertar o placar exato concede **+3 pontos**.\n"
-            "5. O ranking será atualizado conforme a administração validar os resultados.\n\n"
-            "🏆 No fim da Copa, os melhores palpiteiros receberão destaque no servidor.",
-            ephemeral=True
-        )
-
-    @discord.ui.button(
         label="Ranking",
         emoji="🏅",
         style=discord.ButtonStyle.green,
@@ -141,7 +177,10 @@ class PainelView(discord.ui.View):
 
         embed = discord.Embed(
             title="🏅 Ranking dos Palpiteiros",
-            description=lista_texto(dados.get("ranking", []), "Ranking ainda vazio."),
+            description=lista_texto(
+                dados.get("ranking", []),
+                "Ranking ainda vazio."
+            ),
             color=discord.Color.gold()
         )
 
@@ -165,64 +204,42 @@ class PainelCopa(commands.Cog):
         embed = discord.Embed(
             title="🏆 SANTS COPA 2026",
             description=(
-                "━━━━━━━━━━━━━━\n"
                 "🇧🇷 **Brasil rumo ao Hexa**\n"
-                "━━━━━━━━━━━━━━"
+                f"Grupo **{brasil.get('grupo', '-')}** • "
+                f"{brasil.get('posicao', '-')} lugar • "
+                f"**{brasil.get('pontos', 0)} pontos**"
             ),
             color=discord.Color.gold()
         )
 
         embed.add_field(
-            name="🔥 Destaque da Rodada",
-            value=lista_texto(dados.get("destaque", []), "Nenhum destaque cadastrado."),
+            name="🔥 Destaque",
+            value="🎯 Faça seus palpites e dispute o ranking da Sants Copa.",
             inline=False
         )
 
         embed.add_field(
-    name="🇧🇷 Seleção Brasileira",
-    value=(
-        f"🏆 Grupo: **{brasil.get('grupo', '-')}**\n"
-        f"🏅 Posição: **{brasil.get('posicao', '-')}**\n"
-        f"⭐ Pontos: **{brasil.get('pontos', 0)}**\n"
-        f"⚽ Jogos: **{brasil.get('jogos', 0)}**\n"
-        f"✅ Vitórias: **{brasil.get('vitorias', 0)}**\n"
-        f"🤝 Empates: **{brasil.get('empates', 0)}**\n"
-        f"❌ Derrotas: **{brasil.get('derrotas', 0)}**\n"
-        f"🥅 Saldo de gols: **{brasil.get('saldo_gols', 0)}**\n\n"
-        f"⏳ Próximo jogo: **{brasil.get('proximo_jogo', 'A definir')}**\n"
-        f"📅 Data: **{brasil.get('data', 'A definir')}**\n"
-        f"🕒 Horário: **{brasil.get('horario', 'A definir')}**\n"
-        f"🟡 Status: **{brasil.get('status', 'A definir')}**"
-    ),
-    inline=False
-)
-
-        embed.add_field(
-            name="⚽ Jogos de Hoje",
-            value=lista_texto(dados.get("jogos_hoje", []), "📌 Nenhum jogo cadastrado para hoje."),
-            inline=False
-        )
-
-        embed.add_field(
-            name="⏳ Próximos Jogos",
-            value=lista_texto(dados.get("proximos_jogos", []), "📌 Nenhum próximo jogo cadastrado."),
-            inline=False
-        )
-
-        embed.add_field(
-            name="🎯 Palpites",
+            name="⚽ Próximo jogo do Brasil",
             value=(
-                f"Canal: <#{CANAL_PALPITES_ID}>\n"
-                "Participe antes dos jogos começarem e dispute o ranking."
-                if CANAL_PALPITES_ID
-                else "Canal de palpites não configurado."
+                f"**{brasil.get('proximo_jogo', 'A definir')}**\n"
+                f"📅 {brasil.get('data', 'A definir')} às {brasil.get('horario', 'A definir')}\n"
+                f"🟡 Status: {brasil.get('status', 'A definir')}"
             ),
             inline=False
         )
 
         embed.add_field(
             name="🏅 Ranking",
-            value=lista_texto(dados.get("ranking", []), "Ranking ainda vazio."),
+            value=lista_texto(
+                dados.get("ranking", []),
+                "Ranking ainda vazio."
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="📌 Consultas",
+            value="Use os botões abaixo para ver jogos, Brasil, ranking e grupos.",
             inline=False
         )
 
