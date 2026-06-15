@@ -1,80 +1,75 @@
 import os
 import aiohttp
 
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
-
-BASE_URL = "https://api.football-data.org/v4"
-COMPETITION = "WC"
-
 
 class FootballAPI:
     def __init__(self):
-        self.api_key = os.getenv("FOOTBALL_API_KEY")
+        self.api_key = os.getenv("API_FOOTBALL_KEY")
+        self.host = os.getenv("API_FOOTBALL_HOST", "v3.football.api-sports.io")
+        self.base_url = f"https://{self.host}"
 
-    async def get(self, endpoint: str):
+        self.league_id = os.getenv("WORLD_CUP_LEAGUE_ID", "732")
+        self.season = os.getenv("WORLD_CUP_SEASON", "2026")
+
+    async def get(self, endpoint: str, params: dict | None = None):
         if not self.api_key:
-            print("❌ FOOTBALL_API_KEY não encontrada nas variáveis de ambiente.")
+            print("❌ API_FOOTBALL_KEY não encontrada.")
             return None
 
         headers = {
-            "X-Auth-Token": self.api_key
+            "x-apisports-key": self.api_key
         }
 
-        url = f"{BASE_URL}{endpoint}"
+        url = f"{self.base_url}{endpoint}"
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, headers=headers) as response:
-                    if response.status != 200:
-                        error_text = await response.text()
+                async with session.get(
+                    url,
+                    headers=headers,
+                    params=params
+                ) as response:
 
+                    data = await response.json()
+
+                    if response.status != 200:
                         print("=" * 60)
-                        print("❌ FOOTBALL DATA API ERROR")
+                        print("❌ API-FOOTBALL ERROR")
                         print(f"STATUS: {response.status}")
                         print(f"URL: {url}")
-                        print(f"ENDPOINT: {endpoint}")
-                        print(f"RESPOSTA: {error_text}")
+                        print(f"PARAMS: {params}")
+                        print(f"RESPOSTA: {data}")
                         print("=" * 60)
-
                         return None
 
-                    return await response.json()
+                    return data
 
         except Exception as error:
             print("=" * 60)
-            print("❌ ERRO AO CONSULTAR API")
-            print(f"URL: {url}")
+            print("❌ ERRO AO CONSULTAR API-FOOTBALL")
             print(f"ERRO: {error}")
             print("=" * 60)
-
             return None
 
-    async def get_matches(self):
-        return await self.get(f"/competitions/{COMPETITION}/matches")
+    async def get_fixtures(self):
+        return await self.get(
+            "/fixtures",
+            {
+                "league": self.league_id,
+                "season": self.season
+            }
+        )
 
     async def get_standings(self):
-        return await self.get(f"/competitions/{COMPETITION}/standings")
+        return await self.get(
+            "/standings",
+            {
+                "league": self.league_id,
+                "season": self.season
+            }
+        )
 
     async def test_connection(self):
-        return await self.get("/competitions")
-
-    def match_datetime_br(self, utc_date: str):
-        if not utc_date:
-            return "Horário indefinido"
-
-        try:
-            date = datetime.fromisoformat(
-                utc_date.replace("Z", "+00:00")
-            )
-
-            br_date = date.astimezone(
-                ZoneInfo("America/Sao_Paulo")
-            )
-
-            return br_date.strftime("%d/%m às %H:%M")
-
-        except Exception:
-            return "Horário indefinido"
-        
+        return await self.get(
+            "/status"
+        )
