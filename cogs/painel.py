@@ -317,6 +317,27 @@ class PainelCopa(commands.Cog):
             ephemeral=True
         )
 
+    @app_commands.command(
+        name="teste_api",
+        description="Testa se a API da Copa está funcionando."
+    )
+    @app_commands.checks.has_permissions(administrator=True)
+    async def teste_api(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+
+        competitions = await self.api.test_connection()
+        matches = await self.api.get_matches()
+        standings = await self.api.get_standings()
+
+        await interaction.followup.send(
+            "🧪 **Teste da API**\n\n"
+            f"Competições: `{'OK' if competitions else 'ERRO'}`\n"
+            f"Jogos da Copa: `{'OK' if matches else 'ERRO'}`\n"
+            f"Classificação da Copa: `{'OK' if standings else 'ERRO'}`\n\n"
+            "Veja os detalhes em **Railway → Deploy Logs**.",
+            ephemeral=True
+        )
+
     @tasks.loop(minutes=10)
     async def atualizar_painel(self):
         await self.bot.wait_until_ready()
