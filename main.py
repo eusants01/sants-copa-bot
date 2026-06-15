@@ -1,4 +1,5 @@
 import os
+import asyncio
 import discord
 
 from discord.ext import commands
@@ -25,72 +26,22 @@ async def on_ready():
     try:
         await bot.tree.sync()
         print("✅ Comandos slash sincronizados.")
-    except Exception as e:
-        print(f"❌ Erro ao sincronizar comandos: {e}")
+    except Exception as erro:
+        print(f"❌ Erro ao sincronizar comandos: {erro}")
 
 
 async def load_extensions():
-
     extensoes = [
-
         "cogs.painel",
-        "cogs.jogos",
-
+        "cogs.jogos"
     ]
 
     for extensao in extensoes:
-
         try:
-
-            await bot.load_extension(
-                extensao
-            )
-
-            print(
-                f"✅ {extensao} carregado."
-            )
-
+            await bot.load_extension(extensao)
+            print(f"✅ {extensao} carregado.")
         except Exception as erro:
-
-            print(
-                f"❌ Erro em {extensao}: {erro}"
-            )
-
-    for extensao in extensoes:
-
-        try:
-
-            await bot.load_extension(
-                extensao
-            )
-
-            print(
-                f"✅ {extensao} carregado."
-            )
-
-        except Exception as erro:
-
-            print(
-                f"❌ Erro em {extensao}: {erro}"
-            )
-
-    for extensao in extensoes:
-
-        try:
-
-            await bot.load_extension(
-                extensao
-            )
-
-            print(
-                f"✅ {extensao} carregado."
-            )
-
-        except Exception as erro:
-
-            print(
-                f"❌ Erro em {extensao}: {erro}"
-            )
+            print(f"❌ Erro em {extensao}: {erro}")
 
 
 async def main():
@@ -99,5 +50,4 @@ async def main():
         await bot.start(TOKEN)
 
 
-import asyncio
 asyncio.run(main())
