@@ -240,6 +240,8 @@ class CopaUpdater:
 
         fixtures = await api.get_fixtures()
         standings = await api.get_standings()
+        print(fixtures)
+        print(standings)
 
         if not fixtures:
             print("❌ Fixtures indisponíveis.")
