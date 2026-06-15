@@ -11,14 +11,12 @@ from cogs.services.football_api import FootballAPI
 CANAL_COPA_ID = int(os.getenv("CANAL_COPA_ID", 0))
 MENSAGEM_COPA_ID = int(os.getenv("MENSAGEM_COPA_ID", 0))
 CANAL_PALPITES_ID = int(os.getenv("CANAL_PALPITES_ID", 0))
-
 BANNER_COPA_URL = os.getenv("BANNER_COPA_URL")
-
 
 GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
 
 
-def now_br():
+def agora_br():
     return datetime.now().strftime("%d/%m/%Y às %H:%M")
 
 
@@ -32,90 +30,6 @@ def status_jogo(status):
         "POSTPONED": "Adiado",
         "CANCELLED": "Cancelado",
     }.get(status, status)
-
-
-class GrupoSelect(discord.ui.Select):
-    def __init__(self):
-        options = [
-            discord.SelectOption(
-                label=f"Grupo {group}",
-                value=group,
-                emoji="🏆"
-            )
-            for group in GROUPS
-        ]
-
-        super().__init__(
-            placeholder="Escolha um grupo para ver classificação e jogos...",
-            min_values=1,
-            max_values=1,
-            options=options,
-            custom_id="sants_copa_select_grupo"
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        grupo = self.values[0]
-
-        api = FootballAPI()
-        standings = await api.get_standings()
-        matches = await api.get_matches()
-
-        embed = discord.Embed(
-            title=f"🏆 Grupo {grupo} — Sants Copa 2026",
-            description="Classificação, resultados e próximos jogos atualizados automaticamente.",
-            color=discord.Color.green()
-        )
-
-        embed.add_field(
-            name="📊 Classificação",
-            value=formatar_classificacao_grupo(standings, grupo),
-            inline=False
-        )
-
-        embed.add_field(
-            name="⚽ Jogos e Resultados",
-            value=formatar_jogos_grupo(matches, grupo, api),
-            inline=False
-        )
-
-        embed.set_footer(text=f"Atualizado em {now_br()}")
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
-class PainelCopaView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-        self.add_item(GrupoSelect())
-
-        if CANAL_PALPITES_ID:
-            self.add_item(
-                discord.ui.Button(
-                    label="Ir para Palpites",
-                    emoji="🎯",
-                    style=discord.ButtonStyle.link,
-                    url=f"https://discord.com/channels/{CANAL_COPA_ID}/{CANAL_PALPITES_ID}"
-                )
-            )
-
-    @discord.ui.button(
-        label="Regras",
-        emoji="📜",
-        style=discord.ButtonStyle.green,
-        custom_id="sants_copa_regras"
-    )
-    async def regras(self, interaction: discord.Interaction, button: discord.ui.Button):
-        canal = f"<#{CANAL_PALPITES_ID}>" if CANAL_PALPITES_ID else "canal de palpites"
-
-        await interaction.response.send_message(
-            "📜 **Regras dos Palpites**\n\n"
-            f"🎯 Envie seus palpites em {canal}.\n"
-            "⏰ Palpites só valem antes da partida começar.\n"
-            "✅ Vencedor correto: **+1 ponto**\n"
-            "🎯 Placar exato: **+3 pontos**\n"
-            "🔥 Zebra correta: **bônus especial**",
-            ephemeral=True
-        )
 
 
 def formatar_classificacao_grupo(data, grupo):
@@ -141,7 +55,8 @@ def formatar_classificacao_grupo(data, grupo):
             sg = team.get("goalDifference", 0)
 
             linhas.append(
-                f"`{pos}º` **{nome}** — **{pts} pts** | J:{j} V:{v} E:{e} D:{d} SG:{sg}"
+                f"`{pos}º` **{nome}** — **{pts} pts** | "
+                f"J:{j} V:{v} E:{e} D:{d} SG:{sg}"
             )
 
         return "\n".join(linhas) or "Grupo sem dados disponíveis."
@@ -169,9 +84,15 @@ def formatar_jogos_grupo(data, grupo, api):
         placar_fora = match["score"]["fullTime"]["away"]
 
         if placar_casa is None or placar_fora is None:
-            jogos.append(f"⚽ **{casa} x {fora}**\n🕒 `{horario}` • `{status}`")
+            jogos.append(
+                f"⚽ **{casa} x {fora}**\n"
+                f"🕒 `{horario}` • `{status}`"
+            )
         else:
-            jogos.append(f"✅ **{casa} {placar_casa} x {placar_fora} {fora}**\n📌 `{status}`")
+            jogos.append(
+                f"✅ **{casa} {placar_casa} x {placar_fora} {fora}**\n"
+                f"📌 `{status}`"
+            )
 
     return "\n\n".join(jogos[:8]) or "Nenhum jogo encontrado para este grupo."
 
@@ -216,12 +137,99 @@ def buscar_jogos_destaque(matches, api):
         if placar_casa is None or placar_fora is None:
             jogos.append(f"⚽ **{casa} x {fora}** — `{horario}`")
         else:
-            jogos.append(f"✅ **{casa} {placar_casa} x {placar_fora} {fora}** — `{status_formatado}`")
+            jogos.append(
+                f"✅ **{casa} {placar_casa} x {placar_fora} {fora}** — `{status_formatado}`"
+            )
 
         if len(jogos) >= 5:
             break
 
     return "\n".join(jogos) or "Nenhum jogo encontrado."
+
+
+class GrupoSelect(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(
+                label=f"Grupo {grupo}",
+                value=grupo,
+                emoji="🏆"
+            )
+            for grupo in GROUPS
+        ]
+
+        super().__init__(
+            placeholder="Escolha um grupo para ver jogos e classificação...",
+            min_values=1,
+            max_values=1,
+            options=options,
+            custom_id="sants_copa_select_grupo"
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        grupo = self.values[0]
+
+        api = FootballAPI()
+        standings = await api.get_standings()
+        matches = await api.get_matches()
+
+        embed = discord.Embed(
+            title=f"🏆 Grupo {grupo} — Sants Copa 2026",
+            description="Classificação, resultados e próximos jogos atualizados automaticamente.",
+            color=discord.Color.green()
+        )
+
+        embed.add_field(
+            name="📊 Classificação",
+            value=formatar_classificacao_grupo(standings, grupo),
+            inline=False
+        )
+
+        embed.add_field(
+            name="⚽ Jogos e Resultados",
+            value=formatar_jogos_grupo(matches, grupo, api),
+            inline=False
+        )
+
+        embed.set_footer(text=f"Atualizado em {agora_br()}")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+class PainelCopaView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+        self.add_item(GrupoSelect())
+
+        if CANAL_PALPITES_ID:
+            self.add_item(
+                discord.ui.Button(
+                    label="Ir para Palpites",
+                    emoji="🎯",
+                    style=discord.ButtonStyle.link,
+                    url=f"https://discord.com/channels/{CANAL_COPA_ID}/{CANAL_PALPITES_ID}"
+                )
+            )
+
+    @discord.ui.button(
+        label="Regras",
+        emoji="📜",
+        style=discord.ButtonStyle.green,
+        custom_id="sants_copa_regras"
+    )
+    async def regras(self, interaction: discord.Interaction, button: discord.ui.Button):
+        canal = f"<#{CANAL_PALPITES_ID}>" if CANAL_PALPITES_ID else "canal de palpites"
+
+        await interaction.response.send_message(
+            "📜 **Regras dos Palpites**\n\n"
+            f"🎯 Envie seus palpites em {canal}.\n"
+            "⏰ Palpites só valem antes da partida começar.\n"
+            "✅ Vencedor correto: **+1 ponto**\n"
+            "🎯 Placar exato: **+3 pontos**\n"
+            "🔥 Zebra correta: **bônus especial**",
+            ephemeral=True
+        )
 
 
 class PainelCopa(commands.Cog):
@@ -278,7 +286,7 @@ class PainelCopa(commands.Cog):
             inline=False
         )
 
-        embed.set_footer(text=f"Última atualização • {now_br()} • Sants Copa")
+        embed.set_footer(text=f"Última atualização • {agora_br()} • Sants Copa")
 
         return embed
 
@@ -290,16 +298,22 @@ class PainelCopa(commands.Cog):
     async def painel_copa(self, interaction: discord.Interaction):
         canal = interaction.channel
 
-        msg = await canal.send(
+        painel = await canal.send(
             embed=await self.criar_embed(),
             view=PainelCopaView()
         )
 
+        print("=" * 50)
+        print("PAINEL CRIADO")
+        print(f"MENSAGEM_COPA_ID = {painel.id}")
+        print("=" * 50)
+
         await interaction.response.send_message(
             f"✅ Painel criado com sucesso!\n\n"
-            f"Coloque no Railway:\n"
-            f"`MENSAGEM_COPA_ID={msg.id}`\n\n"
-            f"Depois faça **Redeploy**.",
+            f"🆔 ID da mensagem:\n"
+            f"`{painel.id}`\n\n"
+            f"Coloque esse número no Railway em:\n"
+            f"`MENSAGEM_COPA_ID`",
             ephemeral=True
         )
 
