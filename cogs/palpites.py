@@ -5,8 +5,12 @@ from discord.ext import commands
 from discord import app_commands
 
 
-CANAL_PALPITES_ID = int(os.getenv("1515493178415911013", 0))
-BANNER_PALPITES_URL = os.getenv("https://cdn.discordapp.com/attachments/961677475191078992/1517408240634302645/content.png?ex=6a362c0c&is=6a34da8c&hm=0298a369156487db013d4edaf2bb8e681971a76aae6aeca3c50fb36d2903d1ac&")
+CANAL_PALPITES_ID = int(os.getenv("CANAL_PALPITES_ID", 0))
+
+BANNER_PALPITES_URL = os.getenv(
+    "BANNER_PALPITES_URL",
+    "https://cdn.discordapp.com/attachments/961677475191078992/1517408240634302645/content.png?ex=6a362c0c&is=6a34da8c&hm=0298a369156487db013d4edaf2bb8e681971a76aae6aeca3c50fb36d2903d1ac&"
+)
 
 
 JOGO_ATUAL = {
@@ -77,6 +81,15 @@ class PalpitesView(discord.ui.View):
     async def outro_palpite(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(PalpiteModal(self.cog))
 
+    @discord.ui.button(
+        label="Ver Palpites",
+        emoji="📊",
+        style=discord.ButtonStyle.secondary,
+        custom_id="ver_palpites"
+    )
+    async def ver_palpites(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog.mostrar_palpites(interaction)
+
 
 class Palpites(commands.Cog):
     def __init__(self, bot):
@@ -101,11 +114,7 @@ class Palpites(commands.Cog):
         await self.criar_tabela()
         self.bot.add_view(PalpitesView(self))
 
-    async def registrar_palpite(
-        self,
-        interaction: discord.Interaction,
-        palpite: str
-    ):
+    async def registrar_palpite(self, interaction: discord.Interaction, palpite: str):
         async with self.bot.pool.acquire() as conn:
             existe = await conn.fetchrow(
                 """
@@ -119,7 +128,7 @@ class Palpites(commands.Cog):
             if existe:
                 return await interaction.response.send_message(
                     f"⚠️ Você já enviou um palpite para este jogo.\n\n"
-                    f"Seu palpite atual: **{existe['palpite']}**",
+                    f"📊 Seu palpite atual: **{existe['palpite']}**",
                     ephemeral=True
                 )
 
@@ -137,7 +146,7 @@ class Palpites(commands.Cog):
                 JOGO_ATUAL["id"],
                 JOGO_ATUAL["titulo"],
                 interaction.user.id,
-                str(interaction.user),
+                interaction.user.display_name,
                 palpite
             )
 
@@ -145,6 +154,48 @@ class Palpites(commands.Cog):
             f"✅ Palpite registrado com sucesso!\n\n"
             f"📊 Seu palpite: **{palpite}**",
             ephemeral=True
+        )
+
+    async def mostrar_palpites(self, interaction: discord.Interaction):
+        async with self.bot.pool.acquire() as conn:
+            palpites = await conn.fetch(
+                """
+                SELECT user_name, palpite
+                FROM palpites
+                WHERE jogo_id = $1
+                ORDER BY criado_em ASC
+                LIMIT 25
+                """,
+                JOGO_ATUAL["id"]
+            )
+
+        if not palpites:
+            return await interaction.response.send_message(
+                "📭 Ainda não há palpites registrados para este jogo.",
+                ephemeral=True
+            )
+
+        descricao = ""
+
+        for index, row in enumerate(palpites, start=1):
+            descricao += (
+                f"`{index}.` **{row['user_name']}**\n"
+                f"└ 📊 {row['palpite']}\n\n"
+            )
+
+        embed = discord.Embed(
+            title="📊 Palpites da Galera",
+            description=descricao,
+            color=discord.Color.blurple()
+        )
+
+        embed.set_footer(
+            text=f"{JOGO_ATUAL['titulo']} • {len(palpites)} palpites exibidos"
+        )
+
+        await interaction.response.send_message(
+            embed=embed,
+            ephemeral=False
         )
 
     @app_commands.command(
@@ -177,8 +228,8 @@ class Palpites(commands.Cog):
         )
 
         embed.add_field(
-            name="🎯 Como participar",
-            value="Clique em um botão abaixo e registre seu palpite.",
+            name="🎯 Participação",
+            value="Clique em um botão abaixo para registrar seu palpite.",
             inline=False
         )
 
@@ -189,9 +240,19 @@ class Palpites(commands.Cog):
             text="Nebularis • Um universo de grandes momentos."
         )
 
-        await interaction.response.send_message(
+        canal = interaction.guild.get_channel(CANAL_PALPITES_ID)
+
+        if canal is None:
+            canal = interaction.channel
+
+        await canal.send(
             embed=embed,
             view=PalpitesView(self)
+        )
+
+        await interaction.response.send_message(
+            "✅ Painel de palpites enviado com sucesso.",
+            ephemeral=True
         )
 
 
