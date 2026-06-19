@@ -34,10 +34,7 @@ class PalpiteModal(discord.ui.Modal, title="Enviar Palpite"):
         self.cog = cog
 
     async def on_submit(self, interaction: discord.Interaction):
-        await self.cog.registrar_palpite(
-            interaction,
-            str(self.palpite)
-        )
+        await self.cog.registrar_palpite(interaction, str(self.palpite))
 
 
 class PalpitesView(discord.ui.View):
@@ -46,8 +43,7 @@ class PalpitesView(discord.ui.View):
         self.cog = cog
 
     @discord.ui.button(
-        label="Brasil 2x0 Haiti",
-        emoji="🇧🇷",
+        label="🇧🇷 Brasil 2x0 Haiti",
         style=discord.ButtonStyle.success,
         custom_id="palpite_brasil_2x0_haiti"
     )
@@ -55,8 +51,7 @@ class PalpitesView(discord.ui.View):
         await self.cog.registrar_palpite(interaction, "Brasil 2x0 Haiti")
 
     @discord.ui.button(
-        label="Brasil 3x0 Haiti",
-        emoji="🔥",
+        label="🔥 Brasil 3x0 Haiti",
         style=discord.ButtonStyle.success,
         custom_id="palpite_brasil_3x0_haiti"
     )
@@ -64,8 +59,7 @@ class PalpitesView(discord.ui.View):
         await self.cog.registrar_palpite(interaction, "Brasil 3x0 Haiti")
 
     @discord.ui.button(
-        label="Brasil 3x1 Haiti",
-        emoji="⚽",
+        label="⚽ Brasil 3x1 Haiti",
         style=discord.ButtonStyle.primary,
         custom_id="palpite_brasil_3x1_haiti"
     )
@@ -73,8 +67,7 @@ class PalpitesView(discord.ui.View):
         await self.cog.registrar_palpite(interaction, "Brasil 3x1 Haiti")
 
     @discord.ui.button(
-        label="Outro Palpite",
-        emoji="✍️",
+        label="✍️ Outro Palpite",
         style=discord.ButtonStyle.secondary,
         custom_id="palpite_outro"
     )
@@ -82,8 +75,7 @@ class PalpitesView(discord.ui.View):
         await interaction.response.send_modal(PalpiteModal(self.cog))
 
     @discord.ui.button(
-        label="Ver Palpites",
-        emoji="📊",
+        label="📊 Ver Palpites",
         style=discord.ButtonStyle.secondary,
         custom_id="ver_palpites"
     )
@@ -195,7 +187,7 @@ class Palpites(commands.Cog):
 
         await interaction.response.send_message(
             embed=embed,
-            ephemeral=False
+            ephemeral=True
         )
 
     @app_commands.command(
