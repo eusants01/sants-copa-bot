@@ -1,21 +1,19 @@
 import os
 import asyncio
+import asyncpg
 import discord
 
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from cogs.services.updater import CopaUpdater
-
-
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
-
+DATABASE_URL = os.getenv("DATABASE_URL")
+GUILD_ID = int(os.getenv("GUILD_ID"))
 
 intents = discord.Intents.default()
 intents.message_content = True
-
 
 bot = commands.Bot(
     command_prefix="!",
@@ -28,38 +26,29 @@ async def on_ready():
     print(f"✅ {bot.user} conectado com sucesso!")
 
     try:
-        await CopaUpdater.atualizar()
-        print("✅ Dados da Copa sincronizados.")
-    except Exception as erro:
-        print(f"❌ Erro ao sincronizar Copa: {erro}")
+        guild = discord.Object(id=GUILD_ID)
+        synced = await bot.tree.sync(guild=guild)
 
-    await asyncio.sleep(3)
+        print(f"✅ {len(synced)} comandos slash sincronizados.")
 
-    try:
-        await bot.tree.sync()
-        print("✅ Comandos slash sincronizados.")
-    except Exception as erro:
-        print(f"❌ Erro ao sincronizar comandos: {erro}")
+    except Exception as e:
+        print(e)
 
 
 async def load_extensions():
-    extensoes = [
-        "cogs.painel",
-        "cogs.palpites",
-        "cogs.jogos"
-    ]
-
-    for extensao in extensoes:
-        try:
-            await bot.load_extension(extensao)
-            print(f"✅ {extensao} carregado.")
-        except Exception as erro:
-            print(f"❌ Erro em {extensao}: {erro}")
+    await bot.load_extension("cogs.painel")
+    await bot.load_extension("cogs.palpites")
+    await bot.load_extension("cogs.jogos")
 
 
 async def main():
     async with bot:
+        bot.pool = await asyncpg.create_pool(DATABASE_URL)
+
+        print("✅ Banco de dados conectado.")
+
         await load_extensions()
+
         await bot.start(TOKEN)
 
 
