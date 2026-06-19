@@ -190,6 +190,7 @@ class PainelView(discord.ui.View):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
+
 class PainelCopa(commands.Cog):
 
     def __init__(self, bot):
