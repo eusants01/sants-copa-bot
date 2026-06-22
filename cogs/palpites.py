@@ -1,11 +1,14 @@
 import os
 import discord
 
-from datetime import datetime, timezone
+from datetime import datetime
 from discord.ext import commands
 from discord import app_commands
 from collections import Counter
 from zoneinfo import ZoneInfo
+
+
+# ─── Configuração ────────────────────────────────────────────────────────────
 
 CANAL_PALPITES_ID = int(os.getenv("CANAL_PALPITES_ID", 0))
 
@@ -25,20 +28,14 @@ JOGO_ATUAL = {
     "inicio":     datetime(2026, 6, 24, 19, 0, tzinfo=FUSO),
 }
 
-PLACARES_RAPIDOS = [
-    ("🇧🇷 Brasil 2x0 Escócia", "Brasil 2x0 Escócia"),
-    ("🔥 Brasil 3x0 Escócia", "Brasil 3x0 Escócia"),
-    ("⚽ Brasil 3x1 Escócia", "Brasil 3x1 Escócia"),
-    ("💥 Brasil 4x0 Escócia", "Brasil 4x0 Escócia"),
-]
-
-COR_PRINCIPAL  = 0x7B4FDB  
-COR_OURO       = 0xFFD700
-COR_PRATA      = 0xC0C0C0
-COR_ERRO       = 0xFF4C4C
-COR_SUCESSO    = 0x43B581
+COR_PRINCIPAL = 0x7B4FDB
+COR_OURO      = 0xFFD700
+COR_PRATA     = 0xC0C0C0
+COR_ERRO      = 0xFF4C4C
+COR_SUCESSO   = 0x43B581
 
 
+# ─── Helpers ─────────────────────────────────────────────────────────────────
 
 def jogo_ja_comecou() -> bool:
     return datetime.now(tz=FUSO) >= JOGO_ATUAL["inicio"]
@@ -48,6 +45,9 @@ def _embed_base(title: str, description: str = "", color: int = COR_PRINCIPAL) -
     embed = discord.Embed(title=title, description=description, color=color)
     embed.set_footer(text="Nebularis • Um universo de grandes momentos.")
     return embed
+
+
+# ─── Modal ───────────────────────────────────────────────────────────────────
 
 class PalpiteModal(discord.ui.Modal):
     placar = discord.ui.TextInput(
@@ -79,6 +79,8 @@ class PalpiteModal(discord.ui.Modal):
             editando=self.editando,
         )
 
+
+# ─── View principal ───────────────────────────────────────────────────────────
 
 class PalpitesView(discord.ui.View):
     def __init__(self, cog):
@@ -183,11 +185,11 @@ class PalpitesView(discord.ui.View):
         await self.cog.mostrar_palpite_pessoal(interaction)
 
 
+# ─── Cog ─────────────────────────────────────────────────────────────────────
 
 class Palpites(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
 
     async def criar_tabela(self):
         async with self.bot.pool.acquire() as conn:
@@ -210,8 +212,9 @@ class Palpites(commands.Cog):
         await self.criar_tabela()
         self.bot.add_view(PalpitesView(self))
 
+    # ── Lógica de registro ───────────────────────────────────────────────────
+
     async def registrar_rapido(self, interaction: discord.Interaction, placar: str):
-        """Registra palpite rápido via botão — abre modal se já existe ou jogo não começou."""
         if jogo_ja_comecou():
             return await interaction.response.send_message(
                 "⛔ O jogo já começou! Não é mais possível enviar palpites.",
@@ -231,6 +234,7 @@ class Palpites(commands.Cog):
                 ephemeral=True,
             )
 
+        # Abre modal pré-preenchido com o placar escolhido
         await interaction.response.send_modal(
             PalpiteModal(self, placar_pre=placar)
         )
@@ -248,7 +252,7 @@ class Palpites(commands.Cog):
                 ephemeral=True,
             )
 
-        placar = placar.strip()
+        placar      = placar.strip()
         jogador_gol = jogador_gol.strip() if jogador_gol else None
 
         async with self.bot.pool.acquire() as conn:
@@ -269,8 +273,8 @@ class Palpites(commands.Cog):
                 )
                 if existe:
                     return await interaction.response.send_message(
-                        f"⚠️ Você já tem um palpite registrado!\n"
-                        f"Use o botão **✏️ Editar meu palpite** para alterar.",
+                        "⚠️ Você já tem um palpite registrado!\n"
+                        "Use o botão **✏️ Editar meu palpite** para alterar.",
                         ephemeral=True,
                     )
                 await conn.execute(
@@ -286,12 +290,6 @@ class Palpites(commands.Cog):
                     jogador_gol,
                 )
                 acao = "registrado"
-
-        jogador_especial = JOGO_ATUAL["jogador_especial"]
-        acertou_jogador  = (
-            jogador_gol and
-            jogador_especial.lower() in jogador_gol.lower()
-        )
 
         embed = _embed_base(
             title=f"{'✅' if acao == 'registrado' else '✏️'} Palpite {acao} com sucesso!",
@@ -317,13 +315,15 @@ class Palpites(commands.Cog):
             embed.add_field(
                 name="🏆 Categoria",
                 value=(
-                    f"🥈 **Só placar** — elegível para **TOP 2** (100 seguidores Roblox)\n"
-                    f"💡 Dica: informe um jogador para concorrer também ao **TOP 1**!"
+                    "🥈 **Só placar** — elegível para **TOP 2** (100 seguidores Roblox)\n"
+                    "💡 Dica: informe um jogador para concorrer também ao **TOP 1**!"
                 ),
                 inline=False,
             )
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    # ── Views de consulta ─────────────────────────────────────────────────────
 
     async def mostrar_ranking(self, interaction: discord.Interaction):
         async with self.bot.pool.acquire() as conn:
@@ -373,9 +373,9 @@ class Palpites(commands.Cog):
             )
 
         if row["jogador_gol"]:
-            categoria = f"🥇 Combo — concorre ao **TOP 1** (500 seguidores Instagram) se **{row['jogador_gol']}** marcar"
+            categoria = f"🥇 Combo — concorre ao **TOP 1** (500 seg. Instagram) se **{row['jogador_gol']}** marcar"
         else:
-            categoria = f"🥈 Apenas placar — concorre ao **TOP 2** (100 seguidores Roblox)"
+            categoria = "🥈 Apenas placar — concorre ao **TOP 2** (100 seg. Roblox)"
 
         ts_criado  = row["criado_em"].strftime("%d/%m %H:%M")
         ts_editado = row["editado_em"].strftime("%d/%m %H:%M") if row["editado_em"] else None
@@ -398,6 +398,8 @@ class Palpites(commands.Cog):
             embed.set_footer(text="Nebularis • Você ainda pode editar seu palpite antes das 19:00.")
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    # ── Painel de envio ───────────────────────────────────────────────────────
 
     @app_commands.command(
         name="palpites",
@@ -438,6 +440,7 @@ class Palpites(commands.Cog):
         await canal.send(embed=embed, view=PalpitesView(self))
         await interaction.response.send_message("✅ Painel enviado!", ephemeral=True)
 
+    # ── Revelar vencedores ────────────────────────────────────────────────────
 
     @app_commands.command(
         name="revelar_vencedores",
@@ -445,7 +448,7 @@ class Palpites(commands.Cog):
     )
     @app_commands.describe(
         placar_real="Placar real da partida (ex: Brasil 3x0 Escócia)",
-        jogadores_gol="Jogadores que marcaram gol, separados por vírgula (ex: Vini Jr, Rodrygo, Endrick)",
+        jogadores_gol="Jogadores que marcaram gol, separados por vírgula (ex: Vini Jr, Rodrygo)",
     )
     @app_commands.checks.has_permissions(administrator=True)
     async def revelar_vencedores(
@@ -457,8 +460,7 @@ class Palpites(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         placar_real = placar_real.strip()
-
-        marcadores = [j.strip().lower() for j in jogadores_gol.split(",") if j.strip()]
+        marcadores  = [j.strip().lower() for j in jogadores_gol.split(",") if j.strip()]
 
         async with self.bot.pool.acquire() as conn:
             todos = await conn.fetch(
@@ -466,13 +468,13 @@ class Palpites(commands.Cog):
                 JOGO_ATUAL["id"],
             )
 
-        combos   = [] 
-        placares = []  
+        combos   = []
+        placares = []
 
         for row in todos:
-            acertou_placar = row["placar"].lower() == placar_real.lower()
-
+            acertou_placar  = row["placar"].lower() == placar_real.lower()
             acertou_jogador = False
+
             if row["jogador_gol"]:
                 palpite_jogador = row["jogador_gol"].lower()
                 acertou_jogador = any(
@@ -561,6 +563,8 @@ class Palpites(commands.Cog):
             f"📬 DMs: {dm_ok} enviadas, {dm_err} falha(s)",
             ephemeral=True,
         )
+
+    # ── Listar palpites ───────────────────────────────────────────────────────
 
     @app_commands.command(
         name="listar_palpites",
