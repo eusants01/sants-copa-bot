@@ -1,5 +1,6 @@
 import os
 import discord
+import traceback
 
 from datetime import datetime
 from discord.ext import commands
@@ -47,6 +48,20 @@ def _embed_base(title: str, description: str = "", color: int = COR_PRINCIPAL) -
     return embed
 
 
+async def _responder_erro(interaction: discord.Interaction, erro: Exception):
+    """Responde a interação com o erro e printa no console."""
+    tb = traceback.format_exc()
+    print(f"[PALPITES ERRO] {type(erro).__name__}: {erro}\n{tb}")
+    msg = f"❌ Erro interno: `{type(erro).__name__}: {erro}`"
+    try:
+        if not interaction.response.is_done():
+            await interaction.response.send_message(msg, ephemeral=True)
+        else:
+            await interaction.followup.send(msg, ephemeral=True)
+    except Exception:
+        pass
+
+
 # ─── Modal ───────────────────────────────────────────────────────────────────
 
 class PalpiteModal(discord.ui.Modal):
@@ -72,12 +87,18 @@ class PalpiteModal(discord.ui.Modal):
             self.placar.default = placar_pre
 
     async def on_submit(self, interaction: discord.Interaction):
-        await self.cog.registrar_palpite(
-            interaction,
-            placar=str(self.placar).strip(),
-            jogador_gol=str(self.jogador_gol).strip() or None,
-            editando=self.editando,
-        )
+        try:
+            await self.cog.registrar_palpite(
+                interaction,
+                placar=str(self.placar).strip(),
+                jogador_gol=str(self.jogador_gol).strip() or None,
+                editando=self.editando,
+            )
+        except Exception as e:
+            await _responder_erro(interaction, e)
+
+    async def on_error(self, interaction: discord.Interaction, erro: Exception):
+        await _responder_erro(interaction, erro)
 
 
 # ─── View principal ───────────────────────────────────────────────────────────
@@ -94,7 +115,10 @@ class PalpitesView(discord.ui.View):
         row=0,
     )
     async def brasil_2x0(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.cog.registrar_rapido(interaction, "Brasil 2x0 Escócia")
+        try:
+            await self.cog.registrar_rapido(interaction, "Brasil 2x0 Escócia")
+        except Exception as e:
+            await _responder_erro(interaction, e)
 
     @discord.ui.button(
         label="🔥 Brasil 3x0 Escócia",
@@ -103,7 +127,10 @@ class PalpitesView(discord.ui.View):
         row=0,
     )
     async def brasil_3x0(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.cog.registrar_rapido(interaction, "Brasil 3x0 Escócia")
+        try:
+            await self.cog.registrar_rapido(interaction, "Brasil 3x0 Escócia")
+        except Exception as e:
+            await _responder_erro(interaction, e)
 
     @discord.ui.button(
         label="⚽ Brasil 3x1 Escócia",
@@ -112,7 +139,10 @@ class PalpitesView(discord.ui.View):
         row=0,
     )
     async def brasil_3x1(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.cog.registrar_rapido(interaction, "Brasil 3x1 Escócia")
+        try:
+            await self.cog.registrar_rapido(interaction, "Brasil 3x1 Escócia")
+        except Exception as e:
+            await _responder_erro(interaction, e)
 
     @discord.ui.button(
         label="💥 Brasil 4x0 Escócia",
@@ -121,7 +151,10 @@ class PalpitesView(discord.ui.View):
         row=0,
     )
     async def brasil_4x0(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.cog.registrar_rapido(interaction, "Brasil 4x0 Escócia")
+        try:
+            await self.cog.registrar_rapido(interaction, "Brasil 4x0 Escócia")
+        except Exception as e:
+            await _responder_erro(interaction, e)
 
     @discord.ui.button(
         label="✍️ Outro Palpite",
@@ -130,12 +163,15 @@ class PalpitesView(discord.ui.View):
         row=1,
     )
     async def outro_palpite(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if jogo_ja_comecou():
-            return await interaction.response.send_message(
-                "⛔ O jogo já começou! Não é mais possível enviar palpites.",
-                ephemeral=True,
-            )
-        await interaction.response.send_modal(PalpiteModal(self.cog))
+        try:
+            if jogo_ja_comecou():
+                return await interaction.response.send_message(
+                    "⛔ O jogo já começou! Não é mais possível enviar palpites.",
+                    ephemeral=True,
+                )
+            await interaction.response.send_modal(PalpiteModal(self.cog))
+        except Exception as e:
+            await _responder_erro(interaction, e)
 
     @discord.ui.button(
         label="✏️ Editar meu palpite",
@@ -144,27 +180,30 @@ class PalpitesView(discord.ui.View):
         row=1,
     )
     async def editar_palpite(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if jogo_ja_comecou():
-            return await interaction.response.send_message(
-                "⛔ O jogo já começou! Não é possível editar palpites.",
-                ephemeral=True,
-            )
+        try:
+            if jogo_ja_comecou():
+                return await interaction.response.send_message(
+                    "⛔ O jogo já começou! Não é possível editar palpites.",
+                    ephemeral=True,
+                )
 
-        async with interaction.client.pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT placar, jogador_gol FROM palpites WHERE jogo_id=$1 AND user_id=$2",
-                JOGO_ATUAL["id"], interaction.user.id,
-            )
+            async with interaction.client.pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    "SELECT placar, jogador_gol FROM palpites WHERE jogo_id=$1 AND user_id=$2",
+                    JOGO_ATUAL["id"], interaction.user.id,
+                )
 
-        if not row:
-            return await interaction.response.send_message(
-                "📭 Você ainda não enviou um palpite neste jogo. Use os botões acima!",
-                ephemeral=True,
-            )
+            if not row:
+                return await interaction.response.send_message(
+                    "📭 Você ainda não enviou um palpite neste jogo. Use os botões acima!",
+                    ephemeral=True,
+                )
 
-        await interaction.response.send_modal(
-            PalpiteModal(self.cog, placar_pre=row["placar"], editando=True)
-        )
+            await interaction.response.send_modal(
+                PalpiteModal(self.cog, placar_pre=row["placar"], editando=True)
+            )
+        except Exception as e:
+            await _responder_erro(interaction, e)
 
     @discord.ui.button(
         label="📊 Ver Ranking",
@@ -173,7 +212,10 @@ class PalpitesView(discord.ui.View):
         row=2,
     )
     async def ver_ranking(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.cog.mostrar_ranking(interaction)
+        try:
+            await self.cog.mostrar_ranking(interaction)
+        except Exception as e:
+            await _responder_erro(interaction, e)
 
     @discord.ui.button(
         label="🎯 Meu Palpite",
@@ -182,7 +224,10 @@ class PalpitesView(discord.ui.View):
         row=2,
     )
     async def ver_meu_palpite(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.cog.mostrar_palpite_pessoal(interaction)
+        try:
+            await self.cog.mostrar_palpite_pessoal(interaction)
+        except Exception as e:
+            await _responder_erro(interaction, e)
 
 
 # ─── Cog ─────────────────────────────────────────────────────────────────────
@@ -211,6 +256,7 @@ class Palpites(commands.Cog):
     async def cog_load(self):
         await self.criar_tabela()
         self.bot.add_view(PalpitesView(self))
+        print("✅ PalpitesView registrada com sucesso.")
 
     # ── Lógica de registro ───────────────────────────────────────────────────
 
@@ -234,7 +280,6 @@ class Palpites(commands.Cog):
                 ephemeral=True,
             )
 
-        # Abre modal pré-preenchido com o placar escolhido
         await interaction.response.send_modal(
             PalpiteModal(self, placar_pre=placar)
         )
